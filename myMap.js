@@ -3,55 +3,50 @@ $.ajax({
   datatype: "JSON",
   method: "GET",
   success: (data) => {
-    getData(data);
+    initializeMap(data);
+  },
+  error: (err) => {
+    console.error("Failed to load JSON data", err);
   },
 });
 
-function getData(data) {
-  let long = data[0].longitude;
-  let lat = data[0].latitude;
-  maptilersdk.config.apiKey = "MoSLz5r1fpiogdHZ3kM6";
+function initializeMap(data) {
+  maptilersdk.config.apiKey = "MoSLz5r1fpiogdHZ3kM6"; 
+
   const map = new maptilersdk.Map({
-    container: "map",
-    style: maptilersdk.MapStyle.BASIC,
-    center: [135, -29.51],
-    zoom: 4,
+    container: "map", 
+    style: maptilersdk.MapStyle.BASIC, 
+    center: [145.0, -37.8], 
+    zoom: 5, 
   });
 
-  if (!lat && !long) {
-    console.log(data[0].title);
-  } else {
-    for(let i=0; i<data.length; i++){
-    const marker = new maptilersdk.Marker({
-      color: "red",
-      draggable: false,
-    })
-      .setLngLat([data[i].longitude, data[i].latitude])
-      .addTo(map);
-        
+  data.forEach((property) => {
+    if (property.latitude && property.longitude) {
+      const latitude = parseFloat(property.latitude);
+      const longitude = parseFloat(property.longitude);
+
+      const marker = new maptilersdk.Marker({ color: "red" })
+        .setLngLat([longitude, latitude])
+        .addTo(map);
+
+      const popupContent = `
+        <div style="font-size: 14px; line-height: 1.5;">
+          <h3>${property.title}</h3>
+          <img src="${property.cover_img}" alt="Property Image" style="width: 100%; height: auto; margin-bottom: 10px;">
+          <p><b>Address:</b> ${property.full_address}</p>
+          <p><b>Price:</b> ${property.po_price}</p>
+          <p><b>Bedrooms:</b> ${property.bedroom_count}</p>
+          <p><b>Bathrooms:</b> ${property.bathroom_count}</p>
+          <p><a href="${property.property_url}" target="_blank">View Property</a></p>
+          <p>${property.propbasic_detail_one.description}</p>
+        </div>
+      `;
+
+      const popup = new maptilersdk.Popup({ offset: 25 })
+        .setHTML(popupContent)
+        .setMaxWidth("300px");
+
+      marker.setPopup(popup);
     }
-    map.on("load", async function () {
-      const image = await map.loadImage(
-        "./assets/image.png",
-        async function (error, image) {
-          map.addImage("plane", image.data);
-          const geojson = await fetch(data);
-          map.addSource("airports", {
-            type: "geojson",
-            data: geojson,
-          });
-          map.addLayer({
-            id: "airports",
-            type: "symbol",
-            source: "airports",
-            layout: {
-              "icon-image": "plane",
-              "icon-size": ["*", ["get", "scalerank"], 0.01],
-            },
-            paint: {},
-          });
-        }
-      );
-    });
-  }
+  });
 }
