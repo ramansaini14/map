@@ -8,17 +8,6 @@ $.ajax({
 });
 
 function getData(data) {
-  //   let lengthOfData = data.length;
-  //       let long = data[i].longitude;
-  //       let lat = data[i].latitude;
-  //             maptilersdk.config.apiKey = "MoSLz5r1fpiogdHZ3kM6";
-  //             const map = new maptilersdk.Map({
-  //           container: "map",
-  //           style: maptilersdk.MapStyle.BASIC,
-  //           center: [lat,long],
-  //           zoom: 4,
-  //         });
-
   let long = data[0].longitude;
   let lat = data[0].latitude;
   maptilersdk.config.apiKey = "MoSLz5r1fpiogdHZ3kM6";
@@ -32,13 +21,21 @@ function getData(data) {
   if (!lat && !long) {
     console.log(data[0].title);
   } else {
+    for(let i=0; i<data.length; i++){
+    const marker = new maptilersdk.Marker({
+      color: "red",
+      draggable: false,
+    })
+      .setLngLat([data[i].longitude, data[i].latitude])
+      .addTo(map);
+        
+    }
     map.on("load", async function () {
       const image = await map.loadImage(
         "./assets/image.png",
         async function (error, image) {
           map.addImage("plane", image.data);
-          const geojson = await maptilersdk.data.post(`${data}`);
-          console.log("working here");
+          const geojson = await fetch(data);
           map.addSource("airports", {
             type: "geojson",
             data: geojson,
